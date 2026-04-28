@@ -1,9 +1,7 @@
 -- Configuration
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/v10/webhooks/1498592185757470761/9HgevTEaO1cYp-tddnm8gIP00ioGPWyr_NrD6iERIbC6KKJPvJwR5CvWMIelmdNXxmOc"
-
--- PASTE YOUR ENTIRE SCRIPT SOURCE CODE BETWEEN THE [[ ]] BELOW
 local MY_SCRIPT_SOURCE = "loadstring(game:HttpGet('https://raw.githubusercontent.com/fuckalllarp/281hsysbwakiahsvebs/refs/heads/main/Ih0frb9ifecbuof3cbuo4fcbuofbrcoubufcro.lua'))()"
-    
+
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local Workspace = game:GetService("Workspace")
@@ -15,7 +13,7 @@ local HopGuiName = "MobyServerHopGui"
 local IsHopping = false
 local AutoExecEnabled = false
 
--- Cleanup old instances
+-- Cleanup
 for _, v in pairs(CoreGui:GetChildren()) do
     if v.Name == HopGuiName or v.Name == "BestPetESP" then v:Destroy() end
 end
@@ -23,24 +21,46 @@ end
 -- UI Construction
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = HopGuiName
+
 local HopGui = Instance.new("Frame", ScreenGui)
-HopGui.Size = UDim2.new(0, 220, 0, 220)
-HopGui.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+HopGui.Size = UDim2.new(0, 220, 0, 190)
+HopGui.Position = UDim2.new(0.5, -110, 0.5, -95)
+HopGui.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+HopGui.Active = true
+HopGui.Draggable = true -- Legacy drag for simplicity
 Instance.new("UICorner", HopGui)
+
+local startBtn = Instance.new("TextButton", HopGui)
+startBtn.Text = "START SCANNER"
+startBtn.Size = UDim2.new(1, -20, 0, 40)
+startBtn.Position = UDim2.new(0, 10, 0, 10)
+startBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+startBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+startBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", startBtn)
 
 local execBtn = Instance.new("TextButton", HopGui)
 execBtn.Text = "AUTO EXECUTE [OFF]"
-execBtn.Position = UDim2.new(0,15,0,140)
-execBtn.Size = UDim2.new(1,-30,0,35)
-execBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-execBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+execBtn.Size = UDim2.new(1, -20, 0, 40)
+execBtn.Position = UDim2.new(0, 10, 0, 60)
+execBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+execBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 execBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", execBtn)
+
+local statusLbl = Instance.new("TextLabel", HopGui)
+statusLbl.Text = "Status: Idle"
+statusLbl.Size = UDim2.new(1, -20, 0, 30)
+statusLbl.Position = UDim2.new(0, 10, 0, 110)
+statusLbl.BackgroundTransparency = 1
+statusLbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+statusLbl.Font = Enum.Font.Gotham
 
 -- Teleport Logic
 local function teleportToNewServer()
     if IsHopping then return end
     IsHopping = true
+    statusLbl.Text = "Status: Hopping..."
     
     local function findServer()
         local res = game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")
@@ -48,11 +68,10 @@ local function teleportToNewServer()
         if data and data.data then
             for _, server in ipairs(data.data) do
                 if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                    -- Execute the raw source code on the next server
                     if AutoExecEnabled and queue_on_teleport then
-                        [span_3](start_span)queue_on_teleport(MY_SCRIPT_SOURCE)[span_3](end_span)
+                        [span_0](start_span)queue_on_teleport(MY_SCRIPT_SOURCE)[span_0](end_span)
                     end
-                    [span_4](start_span)TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, Player)[span_4](end_span)
+                    [span_1](start_span)TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id, Player)[span_1](end_span)
                     return
                 end
             end
@@ -60,7 +79,7 @@ local function teleportToNewServer()
     end
     
     pcall(findServer)
-    task.wait(2)
+    task.wait(5) -- Longer wait to prevent spamming failed hops
     IsHopping = false
 end
 
@@ -72,7 +91,7 @@ local function sendToDiscord(name, valText)
     
     local payload = {
         ["embeds"] = {{
-            ["title"] = "✅ Target Identified",
+            ["title"] = "✅ Target Found in " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
             ["color"] = 0x00FF00,
             ["fields"] = {
                 {["name"] = "Brainrot", ["value"] = name, ["inline"] = true},
@@ -87,61 +106,62 @@ local function sendToDiscord(name, valText)
         Url = DISCORD_WEBHOOK_URL,
         Method = "POST",
         Body = HttpService:JSONEncode(payload),
-        [span_5](start_span)Headers = {["Content-Type"] = "application/json"}[span_5](end_span)
+        [span_2](start_span)Headers = {["Content-Type"] = "application/json"}[span_2](end_span)
     })
 end
 
 -- ESP & Auto-Hop Loop
 local function startESP()
-    getgenv().BestPetESP = { active = true }
-    getgenv().BestPetESP.loop = task.spawn(function()
-        while getgenv().BestPetESP.active do
-            local foundValuable = false
-            [span_6](start_span)local debris = Workspace:FindFirstChild("Debris")[span_6](end_span)
-            
-            if debris then
-                local children = debris:GetChildren()
-                for _, template in ipairs(children) do
-                    [span_7](start_span)if template.Name == "FastOverheadTemplate" then[span_7](end_span)
-                        local sg = template:FindFirstChildOfClass("SurfaceGui")
-                        local gen = sg and sg:FindFirstChild("Generation", true)
-                        
-                        if gen and gen:IsA("TextLabel") and gen.Text ~= "" then
-                            -- Parse logic for numbers
-                            local text = gen.Text
-                            local clean = text:gsub("%s", ""):match("([%d%.]+)([KkMmBbTt]?)")
-                            local num = tonumber(clean) or 0
-                            
-                            -- Logic: If it's 10M+ (Adjust as needed)
-                            if text:find("M") or text:find("B") or text:find("T") then
-                                foundValuable = true
-                                [span_8](start_span)local name = sg:FindFirstChild("DisplayName", true).Text[span_8](end_span)
-                                sendToDiscord(name, text)
-                                task.wait(3) -- Time for webhook to send
-                                teleportToNewServer()
-                                return -- Stop loop to hop
-                            end
+    if getgenv().Scanning then return end
+    getgenv().Scanning = true
+    statusLbl.Text = "Status: Scanning..."
+    
+    task.spawn(function()
+        -- Give the game a few seconds to load objects before the first check
+        task.wait(3) 
+        
+        local foundValuable = false
+        [span_3](start_span)local debris = Workspace:FindFirstChild("Debris")[span_3](end_span)
+        
+        if debris then
+            for _, template in ipairs(debris:GetChildren()) do
+                [span_4](start_span)if template.Name == "FastOverheadTemplate" then[span_4](end_span)
+                    local sg = template:FindFirstChildOfClass("SurfaceGui")
+                    local gen = sg and sg:FindFirstChild("Generation", true)
+                    
+                    if gen and gen:IsA("TextLabel") and gen.Text ~= "" then
+                        local text = gen.Text
+                        -- Checks if the text contains Million, Billion, or Trillion
+                        if text:find("M") or text:find("B") or text:find("T") then
+                            foundValuable = true
+                            [span_5](start_span)local name = sg:FindFirstChild("DisplayName", true) and sg:FindFirstChild("DisplayName", true).Text or "Unknown"[span_5](end_span)
+                            sendToDiscord(name, text)
+                            statusLbl.Text = "Status: Target Found!"
+                            task.wait(2)
+                            teleportToNewServer()
+                            return 
                         end
                     end
                 end
             end
-
-            -- If we checked everything and found nothing, hop immediately
-            if not foundValuable then
-                teleportToNewServer()
-                return
-            end
-            
-            task.wait(1)
         end
+
+        if not foundValuable then
+            statusLbl.Text = "Status: No targets, hopping..."
+            task.wait(1)
+            teleportToNewServer()
+        end
+        getgenv().Scanning = false
     end)
 end
 
--- Toggles
+-- Button Connections
 execBtn.MouseButton1Click:Connect(function()
     AutoExecEnabled = not AutoExecEnabled
     execBtn.Text = AutoExecEnabled and "AUTO EXECUTE [ON]" or "AUTO EXECUTE [OFF]"
-    execBtn.BackgroundColor3 = AutoExecEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(30, 30, 30)
+    execBtn.BackgroundColor3 = AutoExecEnabled and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(40, 40, 40)
 end)
 
--- The "START" button logic remains the same to trigger startESP()
+startBtn.MouseButton1Click:Connect(function()
+    startESP()
+end)
