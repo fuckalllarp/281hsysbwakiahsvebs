@@ -1,12 +1,13 @@
 --[[ 
     FINAL INTEGRATED BOT HOPPER
-    - Integrated source: https://raw.githubusercontent.com/fuckalllarp/281hsysbwakiahsvebs/refs/heads/main/Ih0frb9ifecbuof3cbuo4fcbuofbrcoubufcro.lua
-    - Fixed "nil value" for queue_on_teleport and httpRequest
-    - Fixed Auto-Hop logic to prevent breaking the loop
+    - Fixed "nil value" error by adding universal function checks
+    - [span_3](start_span)Included Discord Webhook integration[span_3](end_span)
+    - [span_4](start_span)[span_5](start_span)Added Auto-Hop when targets found or server is empty[span_4](end_span)[span_5](end_span)
 ]]
 
+-- Configuration
 local DISCORD_WEBHOOK_URL = "https://discord.com/api/v10/webhooks/1498592185757470761/9HgevTEaO1cYp-tddnm8gIP00ioGPWyr_NrD6iERIbC6KKJPvJwR5CvWMIelmdNXxmOc"
-local MY_SCRIPT_SOURCE = "loadstring(game:HttpGet("https://raw.githubusercontent.com/fuckalllarp/281hsysbwakiahsvebs/refs/heads/main/Ih0frb9ifecbuof3cbuo4fcbuofbrcoubufcro.lua"))()"
+local MY_SCRIPT_SOURCE = "loadstring(game:HttpGet('https://raw.githubusercontent.com/fuckalllarp/281hsysbwakiahsvebs/refs/heads/main/Ih0frb9ifecbuof3cbuo4fcbuofbrcoubufcro.lua'))()"
 
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
@@ -15,7 +16,7 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = (gethui and gethui()) or game:GetService("CoreGui")
 local Player = game:GetService("Players").LocalPlayer
 
--- Universal Executor Support
+-- Universal Executor Function Support
 local queuer = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
 local httpRequest = (syn and syn.request) or (http and http.request) or http_request or request
 
@@ -24,12 +25,12 @@ local IsHopping = false
 local AutoExecEnabled = false
 local SentToWebhook = {}
 
--- Cleanup
+-[span_6](start_span)- Cleanup existing GUIs[span_6](end_span)
 for _, v in pairs(CoreGui:GetChildren()) do
     if v.Name == HopGuiName or v.Name == "BestPetESP" then v:Destroy() end
 end
 
--- UI Setup (Simplified for stability)
+-[span_7](start_span)- UI Construction[span_7](end_span)
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = HopGuiName
 ScreenGui.ResetOnSpawn = false
@@ -66,18 +67,19 @@ statusLbl.BackgroundTransparency = 1
 statusLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
 statusLbl.Font = Enum.Font.Gotham
 
--- Functions
+-[span_8](start_span)- Teleport Logic[span_8](end_span)
 local function teleport()
     if IsHopping then return end
     IsHopping = true
     statusLbl.Text = "Status: Server Hopping..."
     
     local function hop()
-        local data = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+        local res = game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")
+        local data = HttpService:JSONDecode(res)
         for _, v in ipairs(data.data) do
             if v.playing < v.maxPlayers and v.id ~= game.JobId then
                 if AutoExecEnabled and queuer then
-                    queuer(MY_SCRIPT_SOURCE)
+                    pcall(function() queuer(MY_SCRIPT_SOURCE) end)
                 end
                 TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id, Player)
                 return
@@ -89,6 +91,7 @@ local function teleport()
     IsHopping = false
 end
 
+-[span_9](start_span)[span_10](start_span)- Webhook Logic[span_9](end_span)[span_10](end_span)
 local function sendWebhook(name, val)
     if not httpRequest then return end
     local join = "game:GetService('TeleportService'):TeleportToPlaceInstance("..game.PlaceId..", '"..game.JobId.."', game.Players.LocalPlayer)"
@@ -100,11 +103,12 @@ local function sendWebhook(name, val)
             Body = HttpService:JSONEncode({
                 embeds = {{
                     title = "🎯 High Value Found!",
+                    color = 0x00FF00,
                     fields = {
                         {name = "Brainrot", value = name, inline = true},
                         {name = "Value", value = val, inline = true},
                         {name = "JobId", value = "```"..game.JobId.."```"},
-                        {name = "Join", value = "```lua\n"..join.."```"}
+                        {name = "Join Command", value = "```lua\n"..join.."```"}
                     }
                 }}
             })
@@ -112,9 +116,10 @@ local function sendWebhook(name, val)
     end)
 end
 
+-[span_11](start_span)[span_12](start_span)- Scanner Logic[span_11](end_span)[span_12](end_span)
 local function scan()
     statusLbl.Text = "Status: Scanning..."
-    task.wait(3) -- Time for Debris to load
+    task.wait(3) -- Wait for game objects to load
     
     local debris = Workspace:FindFirstChild("Debris")
     local found = false
@@ -126,9 +131,12 @@ local function scan()
                 local gen = sg and sg:FindFirstChild("Generation", true)
                 if gen and gen.Text ~= "" then
                     local txt = gen.Text
+                    -[span_13](start_span)[span_14](start_span)- Check for Million, Billion, or Trillion suffixes[span_13](end_span)[span_14](end_span)
                     if txt:find("M") or txt:find("B") or txt:find("T") then
                         found = true
-                        local name = sg:FindFirstChild("DisplayName", true) and sg:FindFirstChild("DisplayName", true).Text or "Unknown"
+                        local nameLabel = sg:FindFirstChild("DisplayName", true)
+                        local name = nameLabel and nameLabel.Text or "Unknown"
+                        
                         if not SentToWebhook[name..txt] then
                             SentToWebhook[name..txt] = true
                             sendWebhook(name, txt)
@@ -148,7 +156,7 @@ local function scan()
     end
 end
 
--- Toggles
+-[span_15](start_span)- Toggle Connections[span_15](end_span)
 execBtn.MouseButton1Click:Connect(function()
     AutoExecEnabled = not AutoExecEnabled
     execBtn.Text = AutoExecEnabled and "AUTO EXECUTE [ON]" or "AUTO EXECUTE [OFF]"
@@ -157,4 +165,14 @@ end)
 
 startBtn.MouseButton1Click:Connect(function()
     scan()
+end)
+
+-[span_16](start_span)- Auto Fix for Debris folder[span_16](end_span)
+task.spawn(function()
+    while task.wait(2) do
+        if not Workspace:FindFirstChild("Debris") then
+            local d = Instance.new("Folder", Workspace)
+            d.Name = "Debris"
+        end
+    end
 end)
